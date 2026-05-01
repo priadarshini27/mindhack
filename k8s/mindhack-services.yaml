@@ -1,0 +1,208 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: user-service }
+  template:
+    metadata:
+      labels: { app: user-service }
+    spec:
+      containers:
+        - name: user-service
+          image: mindhack-user-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8050 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector: { app: user-service }
+  ports: [{ port: 8050, targetPort: 8050 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: game-service }
+  template:
+    metadata:
+      labels: { app: game-service }
+    spec:
+      containers:
+        - name: game-service
+          image: mindhack-game-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8051 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: game-service
+spec:
+  selector: { app: game-service }
+  ports: [{ port: 8051, targetPort: 8051 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: level-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: level-service }
+  template:
+    metadata:
+      labels: { app: level-service }
+    spec:
+      containers:
+        - name: level-service
+          image: mindhack-level-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8052 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: level-service
+spec:
+  selector: { app: level-service }
+  ports: [{ port: 8052, targetPort: 8052 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scenario-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: scenario-service }
+  template:
+    metadata:
+      labels: { app: scenario-service }
+    spec:
+      containers:
+        - name: scenario-service
+          image: mindhack-scenario-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8053 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scenario-service
+spec:
+  selector: { app: scenario-service }
+  ports: [{ port: 8053, targetPort: 8053 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: answer-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: answer-service }
+  template:
+    metadata:
+      labels: { app: answer-service }
+    spec:
+      containers:
+        - name: answer-service
+          image: mindhack-answer-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8054 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: answer-service
+spec:
+  selector: { app: answer-service }
+  ports: [{ port: 8054, targetPort: 8054 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: score-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: score-service }
+  template:
+    metadata:
+      labels: { app: score-service }
+    spec:
+      containers:
+        - name: score-service
+          image: mindhack-score-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8055 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: score-service
+spec:
+  selector: { app: score-service }
+  ports: [{ port: 8055, targetPort: 8055 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: feedback-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: feedback-service }
+  template:
+    metadata:
+      labels: { app: feedback-service }
+    spec:
+      containers:
+        - name: feedback-service
+          image: mindhack-feedback-service:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8056 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: feedback-service
+spec:
+  selector: { app: feedback-service }
+  ports: [{ port: 8056, targetPort: 8056 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mindhack-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: mindhack-frontend }
+  template:
+    metadata:
+      labels: { app: mindhack-frontend }
+    spec:
+      containers:
+        - name: mindhack-frontend
+          image: mindhack-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 80 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mindhack-frontend
+spec:
+  type: NodePort
+  selector: { app: mindhack-frontend }
+  ports: [{ port: 80, targetPort: 80, nodePort: 30080 }]

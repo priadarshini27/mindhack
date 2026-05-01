@@ -1,0 +1,103 @@
+services:
+  mysql:
+    image: mysql:8
+    container_name: mindhack-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  user-service:
+    build: ./user-service
+    image: mindhack-user-service:latest
+    ports:
+      - "8050:8050"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  game-service:
+    build: ./game-service
+    image: mindhack-game-service:latest
+    ports:
+      - "8051:8051"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      level-service:
+        condition: service_started
+      scenario-service:
+        condition: service_started
+      answer-service:
+        condition: service_started
+      score-service:
+        condition: service_started
+      feedback-service:
+        condition: service_started
+
+  level-service:
+    build: ./level-service
+    image: mindhack-level-service:latest
+    ports:
+      - "8052:8052"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  scenario-service:
+    build: ./scenario-service
+    image: mindhack-scenario-service:latest
+    ports:
+      - "8053:8053"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  answer-service:
+    build: ./answer-service
+    image: mindhack-answer-service:latest
+    ports:
+      - "8054:8054"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  score-service:
+    build: ./score-service
+    image: mindhack-score-service:latest
+    ports:
+      - "8055:8055"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  feedback-service:
+    build: ./feedback-service
+    image: mindhack-feedback-service:latest
+    ports:
+      - "8056:8056"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    image: mindhack-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - user-service
+      - game-service
+
+volumes:
+  mysql-data:
