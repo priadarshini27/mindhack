@@ -32,7 +32,7 @@ const Level5Escape = ({ onAction }) => {
     if (feedback) return;
     if (!markPhishing) {
       setFeedback({ correct: false, message: "Incorrect. You trusted a suspicious vendor update. The attacker gained a foothold!" });
-      setTimeout(() => onAction(false, 0, false), 2500);
+      setTimeout(() => onAction(false, 0, true), 2500);
     } else {
       setFeedback({ correct: true, message: "Good catch. But the attacker immediately pivots to another vector..." });
       setTimeout(() => {
@@ -46,7 +46,7 @@ const Level5Escape = ({ onAction }) => {
     if (feedback) return;
     if (!block) {
       setFeedback({ correct: false, message: "Incorrect. You engaged with the attacker and they cloned your session." });
-      setTimeout(() => onAction(false, 0, false), 2500);
+      setTimeout(() => onAction(false, 0, true), 2500);
     } else {
       setFeedback({ correct: true, message: "Blocked! But wait, alarms are going off in the server room!" });
       setTimeout(() => {
@@ -60,20 +60,20 @@ const Level5Escape = ({ onAction }) => {
     if (feedback || terminalTyping) return;
     if (action === 'shutdown') {
       setFeedback({ correct: false, message: "Critical Failure! You shut down the main server, causing a massive outage and losing trace of the attacker." });
-      setTimeout(() => onAction(false, 0, false), 2500);
+      setTimeout(() => onAction(false, 0, true), 2500);
     } else if (action === 'isolate') {
       setFeedback({ correct: true, message: "Excellent! You isolated the compromised node, stopping the breach without causing a total outage." });
       setTimeout(() => onAction(true, 500, true), 3000);
     } else if (action === 'ignore') {
       setFeedback({ correct: false, message: "You ignored the logs. The attacker successfully exfiltrated 500GB of customer data." });
-      setTimeout(() => onAction(false, 0, false), 2500);
+      setTimeout(() => onAction(false, 0, true), 2500);
     }
   };
 
   return (
     <div className="card animate-fade-in" style={styles.container}>
       <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--accent-color)' }}>
-        <FaShieldAlt /> Level 5: The Final Breach
+        <FaShieldAlt /> Level 5: Escape Protocol
       </h2>
       <p style={{ color: 'var(--text-secondary)' }}>
         {phase === 0 && "Phase 1: A highly targeted spear-phishing email just arrived."}
@@ -165,8 +165,9 @@ const Level5Escape = ({ onAction }) => {
       )}
 
       {feedback && (
-        <div style={styles.feedback}>
+        <div style={{ ...styles.feedback, ...(feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong) }}>
           {feedback.message}
+          {feedback.correct && phase === 2 && <div style={{ marginTop: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Level Complete!</div>}
         </div>
       )}
     </div>
@@ -254,6 +255,16 @@ const styles = {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '8px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
+  },
+  feedbackCorrect: {
+    color: 'var(--success)',
+    borderColor: 'var(--success)',
+    backgroundColor: 'rgba(41, 204, 144, 0.12)',
+  },
+  feedbackWrong: {
+    color: 'var(--danger)',
+    borderColor: 'var(--danger)',
+    backgroundColor: 'rgba(255, 82, 82, 0.12)',
   }
 };
 

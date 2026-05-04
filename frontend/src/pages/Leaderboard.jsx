@@ -1,37 +1,46 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaTrophy, FaArrowLeft } from 'react-icons/fa';
 import { useGame } from '../context/GameContext';
 import { api } from '../services/api';
 
 const Leaderboard = () => {
-  const { state, dispatch } = useGame();
+  const { state } = useGame();
+  const [players, setPlayers] = useState([]);
 
   useEffect(() => {
     api.leaderboard()
       .then((rows) => {
-        if (!Array.isArray(rows) || rows.length === 0) return;
-        dispatch({
-          type: 'SET_LEADERBOARD',
-          payload: rows.map((row) => ({
-            username: row.playerName,
-            name: row.playerName,
-            score: row.totalScore,
-            rankCategory: row.rankName,
-            streak: row.streak,
-          })),
-        });
-      })
-      .catch(() => {});
-  }, [dispatch]);
+        if (!Array.isArray(rows)) {
+          setPlayers([]);
+          return;
+        }
 
-  const topPlayers = state.leaderboard
+        const formatted = rows.map((row) => ({
+          username: row.playerName,
+          name: row.playerName,
+          score: row.totalScore,
+          rankCategory: row.rankName,
+          streak: row.streak,
+        }));
+
+        setPlayers(formatted);
+      })
+      .catch(() => {
+        setPlayers([]);
+      });
+  }, []);
+
+  const topPlayers = players
     .slice()
     .sort((a, b) => b.score - a.score)
     .map((player, index) => ({
       ...player,
       rank: index + 1,
-      displayName: player.username === state.user?.username ? `${player.name} (You)` : player.name
+      displayName:
+        player.username === state.user?.username
+          ? `${player.name} (You)`
+          : player.name,
     }));
 
   return (
@@ -40,7 +49,16 @@ const Leaderboard = () => {
         <Link to="/dashboard" className="btn" style={{ padding: '0.5rem 1rem' }}>
           <FaArrowLeft /> Back
         </Link>
-        <h1 style={{ color: 'var(--accent-color)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+
+        <h1
+          style={{
+            color: 'var(--accent-color)',
+            margin: 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
           <FaTrophy /> Global Leaderboard
         </h1>
       </div>
@@ -56,20 +74,49 @@ const Leaderboard = () => {
               <th style={styles.th}>Top Streak</th>
             </tr>
           </thead>
+
           <tbody>
-            {topPlayers.map((player) => (
-              <tr key={player.rank} style={styles.tableRow}>
-                <td style={styles.td}>
-                  <span style={player.rank <= 3 ? styles.topRank : styles.rankBadge}>
-                    #{player.rank}
-                  </span>
+            {topPlayers.length > 0 ? (
+              topPlayers.map((player) => (
+                <tr key={player.rank} style={styles.tableRow}>
+                  <td style={styles.td}>
+                    <span style={player.rank <= 3 ? styles.topRank : styles.rankBadge}>
+                      #{player.rank}
+                    </span>
+                  </td>
+
+                  <td style={{ ...styles.td, fontWeight: 'bold' }}>
+                    {player.displayName}
+                  </td>
+
+                  <td
+                    style={{
+                      ...styles.td,
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--accent-color)',
+                    }}
+                  >
+                    {player.score}
+                  </td>
+
+                  <td style={styles.td}>{player.rankCategory}</td>
+                  <td style={styles.td}>{player.streak}🔥</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="5"
+                  style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  No leaderboard data found.
                 </td>
-                <td style={{...styles.td, fontWeight: 'bold'}}>{player.displayName}</td>
-                <td style={{...styles.td, fontFamily: 'var(--font-mono)', color: 'var(--accent-color)'}}>{player.score}</td>
-                <td style={styles.td}>{player.rankCategory}</td>
-                <td style={styles.td}>{player.streak}🔥</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -106,7 +153,6 @@ const styles = {
   },
   tableRow: {
     borderBottom: '1px solid var(--bg-color-lighter)',
-    transition: 'background-color 0.2s',
   },
   td: {
     padding: '1.2rem 1rem',
@@ -125,7 +171,7 @@ const styles = {
     padding: '0.2rem 0.6rem',
     borderRadius: '4px',
     fontFamily: 'var(--font-mono)',
-  }
+  },
 };
 
 export default Leaderboard;

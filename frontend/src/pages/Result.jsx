@@ -57,6 +57,9 @@ const Result = () => {
               <FaRedo /> Play Again
             </button>
           )}
+          <Link to="/analysis" className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
+            View AI Improvement Analysis
+          </Link>
           <Link to="/dashboard" className="btn" style={{ width: '100%', justifyContent: 'center' }}>
             Return to Dashboard
           </Link>

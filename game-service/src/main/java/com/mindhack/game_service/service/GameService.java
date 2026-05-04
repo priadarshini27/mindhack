@@ -6,6 +6,8 @@ import com.mindhack.game_service.model.GameSession;
 import com.mindhack.game_service.repository.GameSessionRepository;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,6 +24,8 @@ public class GameService {
     private String answerUrl;
     @Value("${service.score.url}")
     private String scoreUrl;
+    @Value("${service.user.url}")
+    private String userUrl;
 
     public GameService(GameSessionRepository repository) {
         this.repository = repository;
@@ -41,6 +45,33 @@ public class GameService {
         return rest.getForObject(levelUrl + "/level/" + id, Object.class);
     }
 
+    private void syncUserProfile(Long userId, int totalScore, boolean correct) {
+        if (userId == null) {
+            return;
+        }
+
+        try {
+            rest.exchange(
+                    userUrl + "/users/" + userId + "/progress",
+                    HttpMethod.PUT,
+                    new HttpEntity<>(Map.of(
+                            "score", totalScore,
+                            "rank", determineRank(totalScore),
+                            "correctDecision", correct)),
+                    Object.class);
+        } catch (Exception ex) {
+            // log and continue; score service update should not break game action flow
+            System.err.println("Warning: failed to sync user profile progress for user " + userId + ": " + ex.getMessage());
+        }
+    }
+
+    private String determineRank(int score) {
+        if (score < 500) return "Beginner";
+        if (score < 1000) return "Intermediate";
+        if (score < 2000) return "Expert";
+        return "Cyber Defender Elite";
+    }
+
     public Boolean checkAnswer(String answer, String correct) {
         String url = answerUrl + "/answer/check?answer=" + answer + "&correct=" + correct;
         return rest.postForObject(url, null, Boolean.class);
@@ -55,6 +86,9 @@ public class GameService {
         session.setStreak(correct ? session.getStreak() + 1 : 0);
         if (!correct) {
             session.setLifelines(Math.max(0, session.getLifelines() - 1));
+            if (session.getLifelines() == 0) {
+                session.setStatus("FAILED");
+            }
         }
         session.getLevelScores().add(scoreDelta);
         session.setCurrentLevel(Math.min(5, request.getLevelId().intValue() + 1));
@@ -69,6 +103,7 @@ public class GameService {
                 "score", scoreDelta,
                 "totalScore", saved.getTotalScore(),
                 "streak", saved.getStreak()), Object.class);
+        syncUserProfile(request.getUserId(), saved.getTotalScore(), correct);
         return saved;
     }
 }

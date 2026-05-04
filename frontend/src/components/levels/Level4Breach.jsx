@@ -26,7 +26,7 @@ const Level4Breach = ({ onAction }) => {
   const handleMiss = () => {
     if (feedback) return;
     setFeedback({ correct: false, message: "You missed the obvious red flags and entered data!" });
-    setTimeout(() => onAction(false, 0), 2000);
+    setTimeout(() => onAction(false, 0, true), 2000);
   };
 
   return (
@@ -80,8 +80,9 @@ const Level4Breach = ({ onAction }) => {
       </div>
 
       {feedback && (
-        <div style={{...styles.feedback, color: feedback.correct ? 'var(--success)' : 'var(--danger)'}}>
+        <div style={{ ...styles.feedback, ...(feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong) }}>
           {feedback.message}
+          {feedback.correct && <div style={{ marginTop: '0.75rem', color: 'var(--success)', fontWeight: 700 }}>Level Complete!</div>}
         </div>
       )}
     </div>
@@ -168,7 +169,20 @@ const styles = {
     textAlign: 'center',
     fontWeight: 'bold',
     marginTop: '1rem',
-    fontSize: '1.1rem'
+    fontSize: '1.1rem',
+    padding: '1rem',
+    borderRadius: '10px',
+    border: '1px solid transparent',
+  },
+  feedbackCorrect: {
+    color: 'var(--success)',
+    borderColor: 'var(--success)',
+    backgroundColor: 'rgba(41, 204, 144, 0.12)',
+  },
+  feedbackWrong: {
+    color: 'var(--danger)',
+    borderColor: 'var(--danger)',
+    backgroundColor: 'rgba(255, 82, 82, 0.12)',
   }
 };
 

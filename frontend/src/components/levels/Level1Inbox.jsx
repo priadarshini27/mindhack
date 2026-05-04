@@ -80,10 +80,10 @@ const Level1Inbox = ({ onAction }) => {
               </div>
 
               {processedEmails.includes(selectedEmail.id) || feedback ? (
-                <div style={{...styles.feedback, color: 'var(--text-main)' }}>
+                <div style={{...styles.feedback, ...(feedback ? (feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong) : {}) }}>
                   {feedback ? feedback.message : 'You have already classified this email.'}
-                  {processedEmails.length === emails.length && feedback && (
-                    <div style={{ marginTop: '1rem', color: 'var(--accent-color)' }}>Level Complete! Proceeding...</div>
+                  {processedEmails.length === emails.length && feedback?.correct && (
+                    <div style={{ marginTop: '1rem', color: 'var(--success)', fontWeight: 700 }}>Level Complete!</div>
                   )}
                 </div>
               ) : (
@@ -161,6 +161,16 @@ const styles = {
     textAlign: 'center',
     marginTop: '2rem',
     border: '1px solid rgba(255, 255, 255, 0.1)'
+  },
+  feedbackCorrect: {
+    color: 'var(--success)',
+    borderColor: 'var(--success)',
+    backgroundColor: 'rgba(41, 204, 144, 0.12)',
+  },
+  feedbackWrong: {
+    color: 'var(--danger)',
+    borderColor: 'var(--danger)',
+    backgroundColor: 'rgba(255, 82, 82, 0.12)',
   }
 };
 

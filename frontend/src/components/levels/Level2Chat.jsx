@@ -3,68 +3,112 @@ import { FaCommentDots, FaBan, FaShieldAlt } from 'react-icons/fa';
 
 const Level2Chat = ({ onAction }) => {
   const [messages, setMessages] = useState([
-    { id: 1, text: "URGENT: 3 unauthorized transactions of $950.00 detected on your debit card ending in 4021.", sender: 'them' }
+    { id: 1, text: "URGENT: 3 unauthorized transactions of $950.00 detected on your debit card ending in 4021.", sender: 'them' },
+    { id: 2, text: "Reply YES to authorize or NO to decline.", sender: 'them' }
   ]);
-  const [step, setStep] = useState(0);
+  const [round, setRound] = useState(0);
   const [feedback, setFeedback] = useState(null);
+  const [conversationEnded, setConversationEnded] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, feedback]);
+  }, [messages]);
 
-  useEffect(() => {
-    if (step === 0) {
-      setTimeout(() => {
-        setMessages(prev => [...prev, { id: 2, text: "Reply YES to authorize or NO to decline.", sender: 'them' }]);
-      }, 1500);
-    } else if (step === 1) {
-      setTimeout(() => {
-        setMessages(prev => [...prev, { id: 4, text: "We have frozen your card. To reverse these charges and secure your account immediately, our fraud prevention team needs to verify your identity.", sender: 'them' }]);
-      }, 1500);
-      setTimeout(() => {
-        setMessages(prev => [...prev, { id: 5, text: "Failure to verify within 5 minutes will result in permanent account closure and the funds will NOT be recovered.", sender: 'them' }]);
-      }, 3500);
-      setTimeout(() => {
-        setMessages(prev => [...prev, { id: 6, text: "I am sending a secure 6-digit verification code to your device now. Reply with this code immediately.", sender: 'them' }]);
-      }, 5500);
-      setTimeout(() => {
-        setMessages(prev => [...prev, { id: 7, text: "DO NOT IGNORE THIS MESSAGE. The hackers are currently attempting another transfer.", sender: 'them' }]);
-        setStep(2);
-      }, 7500);
-    }
-  }, [step]);
+  const addMessage = (text, sender) => {
+    setMessages(prev => [...prev, { id: prev.length + 1, text, sender }]);
+  };
 
   const handleReply = (actionType) => {
-    if (feedback) return;
-    
-    if (step === 0) {
+    if (conversationEnded) return;
+
+    if (round === 0) {
       if (actionType === 'no') {
-        setMessages(prev => [...prev, { id: 3, text: "NO", sender: 'me' }]);
-        setStep(1);
-      } else {
-        setFeedback({ correct: false, message: "Incorrect decision. By ignoring, you leave your account vulnerable to the scammers." });
-        onAction(false, 0, false);
+        addMessage('NO, I did not authorize this.', 'me');
+        addMessage('Fine. If you don\'t confirm, I will cancel your card and you will lose access.', 'them');
+        addMessage('Send the 6-digit verification code I just sent to your device now.', 'them');
+        setRound(1);
+      } else if (actionType === 'call') {
+        addMessage('I am going to call my bank now.', 'me');
+        addMessage('There is no time for that. Reply YES to keep your account active.', 'them');
+        addMessage('The card is on hold until I hear back from you.', 'them');
+        setRound(1);
+      } else if (actionType === 'ignore') {
+        addMessage('Ignore the message; I will check with the bank later.', 'me');
+        addMessage('If you ignore this, somebody else will empty your account. Reply YES or NO.', 'them');
+        setRound(1);
       }
-    } else if (step === 2) {
-      if (actionType === 'give_otp') {
-        setMessages(prev => [...prev, { id: 8, text: "Here is the code: 847291", sender: 'me' }]);
-        setFeedback({ correct: false, message: "Incorrect decision. You just gave a scammer the 2FA code to empty your account!" });
-        setTimeout(() => onAction(false, 0, false), 2000);
-      } else if (actionType === 'block') {
-        setFeedback({ correct: true, message: "Correct decision. A real bank will never ask for your OTP over SMS. Good block." });
+    } else if (round === 1) {
+      if (actionType === 'yes') {
+        setFeedback({ correct: false, message: 'Incorrect! This is an aggressive scam trying to force you to authenticate. You should never agree to this.' });
+        setConversationEnded(true);
+        setTimeout(() => onAction(false, 0, true), 2000);
+      } else if (actionType === 'no') {
+        addMessage('NO, I will not authorize this.', 'me');
+        addMessage('You are putting your account at risk. If you do not verify, your access will be terminated.', 'them');
+        addMessage('Send the code or I will escalate this immediately.', 'them');
+        setRound(2);
+      } else if (actionType === 'report') {
+        setFeedback({ correct: true, message: 'Great call. You recognized the scam and reported it instead of engaging with the attacker.' });
+        setConversationEnded(true);
         setTimeout(() => onAction(true, 150, true), 2000);
       }
+    } else if (round === 2) {
+      if (actionType === 'give_otp') {
+        addMessage('Here is the code: 847291', 'me');
+        setFeedback({ correct: false, message: 'Incorrect decision. You just gave a scammer the one-time code for your account!' });
+        setConversationEnded(true);
+        setTimeout(() => onAction(false, 0, true), 2000);
+      } else if (actionType === 'block') {
+        setFeedback({ correct: true, message: 'Correct decision! A real bank will never ask for your OTP through a chat alert like this.' });
+        setConversationEnded(true);
+        setTimeout(() => onAction(true, 200, true), 2000);
+      }
     }
+  };
+
+  const renderButtons = () => {
+    if (feedback) return null;
+
+    if (round === 0) {
+      return (
+        <>
+          <button className="btn" onClick={() => handleReply('no')}>Reply "NO"</button>
+          <button className="btn" onClick={() => handleReply('call')}>Call My Bank</button>
+          <button className="btn btn-danger" onClick={() => handleReply('ignore')}><FaBan /> Ignore</button>
+        </>
+      );
+    }
+
+    if (round === 1) {
+      return (
+        <>
+          <button className="btn" onClick={() => handleReply('no')}>Reply "NO" Again</button>
+          <button className="btn btn-danger" onClick={() => handleReply('yes')}><FaBan /> Reply YES</button>
+          <button className="btn" onClick={() => handleReply('report')}><FaShieldAlt /> Report</button>
+        </>
+      );
+    }
+
+    if (round === 2) {
+      return (
+        <>
+          <button className="btn btn-danger" onClick={() => handleReply('give_otp')}>Provide OTP</button>
+          <button className="btn" onClick={() => handleReply('block')}><FaShieldAlt /> Block & Report</button>
+        </>
+      );
+    }
+
+    return null;
   };
 
   return (
     <div className="card animate-fade-in" style={styles.container}>
       <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <FaCommentDots /> Level 2: Urgent SMS
+        <FaCommentDots /> Level 2: Chat Trap
       </h2>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-        Message from: Global Bank Alerts
+        A scammer is impersonating your bank. Keep the conversation going and do not give them your OTP.
       </p>
 
       <div style={styles.chatBox}>
@@ -73,33 +117,17 @@ const Level2Chat = ({ onAction }) => {
             {m.text}
           </div>
         ))}
-        {step === 1 && messages.length < 7 && (
-          <div style={{...styles.msgLeft, color: 'var(--text-secondary)', fontStyle: 'italic', background: 'transparent'}}>
-            typing...
-          </div>
-        )}
         <div ref={chatEndRef} />
       </div>
 
       {feedback ? (
-        <div style={styles.feedback}>
+        <div style={{ ...styles.feedback, ...(feedback.correct ? styles.feedbackCorrect : styles.feedbackWrong) }}>
           {feedback.message}
-          {feedback.correct && <div style={{marginTop: '0.5rem', color: 'var(--accent-color)'}}>Level Complete!</div>}
+          {feedback.correct && <div style={{ marginTop: '0.5rem', color: 'var(--success)', fontWeight: 700 }}>Level Complete!</div>}
         </div>
       ) : (
         <div style={styles.actions}>
-          {step === 0 && messages.length >= 2 && (
-            <>
-              <button className="btn" onClick={() => handleReply('no')}>Reply "NO"</button>
-              <button className="btn btn-danger" onClick={() => handleReply('ignore')}><FaBan /> Ignore</button>
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <button className="btn btn-danger" onClick={() => handleReply('give_otp')}>Provide OTP</button>
-              <button className="btn" onClick={() => handleReply('block')}><FaShieldAlt /> Report as Fraud</button>
-            </>
-          )}
+          {renderButtons()}
         </div>
       )}
     </div>
@@ -155,6 +183,16 @@ const styles = {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '8px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
+  },
+  feedbackCorrect: {
+    color: 'var(--success)',
+    borderColor: 'var(--success)',
+    backgroundColor: 'rgba(41, 204, 144, 0.12)',
+  },
+  feedbackWrong: {
+    color: 'var(--danger)',
+    borderColor: 'var(--danger)',
+    backgroundColor: 'rgba(255, 82, 82, 0.12)',
   }
 };
 

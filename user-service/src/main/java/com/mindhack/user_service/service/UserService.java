@@ -69,7 +69,7 @@ public class UserService {
         if (request.getScore() > user.getBestScore()) {
             user.setBestScore(request.getScore());
         }
-        if (request.getRank() != null && !request.getRank().isBlank()) {
+        if (request.getRank() != null && !request.getRank().isBlank() && !request.getRank().equals(user.getLatestRank())) {
             user.setLatestRank(request.getRank());
             user.getRankHistory().add(request.getRank());
         }

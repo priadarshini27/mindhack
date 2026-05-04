@@ -40,26 +40,53 @@ const Game = () => {
     }
   }, [state.oathTaken, state.gameStatus, state.sessionId, state.user?.id, navigate, dispatch]);
 
-  const syncAction = (isCorrect, points) => {
-    if (!state.user?.id || !state.sessionId) return;
-    const success = `LEVEL_${state.currentLevel}_SUCCESS`;
-    api.action({
-      userId: state.user.id,
-      playerName: state.user.username,
-      sessionId: state.sessionId,
-      levelId: state.currentLevel,
-      action: isCorrect ? success : `LEVEL_${state.currentLevel}_RISK`,
-      expectedAction: success,
-      weaknessCategory: isCorrect ? 'none' : `Level ${state.currentLevel} decision`,
-      scoreDelta: points,
-      decisionTimeMs: Date.now() - startedAt.current,
-    })
-      .then((session) => dispatch({ type: 'SYNC_BACKEND_GAME', payload: session }))
-      .catch(() => {});
+  const getWeaknessCategory = (level) => {
+    return {
+      1: 'Phishing detection',
+      2: 'Social engineering',
+      3: 'Urgency handling',
+      4: 'Website spoofing',
+      5: 'Decision timing'
+    }[level] || `Level ${level} decision`;
+  };
+
+  const syncAction = (currentLevel, isCorrect, points, decisionTimeMs) => {
+    const weaknessCategory = isCorrect ? 'none' : getWeaknessCategory(currentLevel);
+    if (state.user?.id && state.sessionId) {
+      const success = `LEVEL_${currentLevel}_SUCCESS`;
+      api.action({
+        userId: state.user.id,
+        playerName: state.user.username,
+        sessionId: state.sessionId,
+        levelId: currentLevel,
+        action: isCorrect ? success : `LEVEL_${currentLevel}_RISK`,
+        expectedAction: success,
+        weaknessCategory,
+        scoreDelta: points,
+        decisionTimeMs,
+      })
+        .then((session) => dispatch({ type: 'SYNC_BACKEND_GAME', payload: session }))
+        .catch(() => {});
+    }
+
+    dispatch({
+      type: 'RECORD_ACTION',
+      payload: {
+        levelId: currentLevel,
+        correct: isCorrect,
+        weaknessCategory,
+        decisionTimeMs,
+      }
+    });
   };
 
   const handleAction = (isCorrect, points, isLevelComplete = true) => {
-    syncAction(isCorrect, points);
+    const currentLevel = state.currentLevel;
+    const decisionTimeMs = Date.now() - startedAt.current;
+    const willLoseLife = !isCorrect && !shieldActive;
+    const willFail = willLoseLife && state.lifelines - 1 <= 0;
+
+    syncAction(currentLevel, isCorrect, points, decisionTimeMs);
     if (isCorrect) {
       dispatch({ type: 'ANSWER_CORRECT', payload: { points } });
     } else {
@@ -71,9 +98,9 @@ const Game = () => {
       }
     }
 
-    if (isLevelComplete || !isCorrect) {
+    if (isLevelComplete || willFail) {
       setTimeout(() => {
-        if (state.currentLevel === 5) {
+        if (currentLevel === 5 || willFail) {
           dispatch({ type: 'END_GAME' });
         } else {
           startedAt.current = Date.now();

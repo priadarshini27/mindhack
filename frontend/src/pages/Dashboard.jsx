@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { FaUserShield, FaFire, FaTrophy, FaMedal, FaSignOutAlt } from 'react-icons/fa';
+import CyberThreatPulse from '../components/CyberThreatPulse';
 
 const Dashboard = () => {
   const { state, dispatch } = useGame();
@@ -14,6 +15,7 @@ const Dashboard = () => {
 
   return (
     <div style={styles.container}>
+      <CyberThreatPulse />
       <h1 style={{ color: 'var(--accent-color)' }}>Agent Dashboard</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
         Welcome back, Agent {state.user?.username || 'Guest'}. Review your cyber defense metrics.
@@ -39,9 +41,12 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem' }}>
+      <div style={{ marginTop: '3rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <Link to="/oath" className="btn btn-primary pulse-glow">
           Start New Simulation
+        </Link>
+        <Link to="/analysis" className="btn btn-secondary">
+          AI Improvement Analysis
         </Link>
         <Link to="/leaderboard" className="btn">
           View Global Leaderboard

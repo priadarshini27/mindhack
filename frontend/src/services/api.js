@@ -4,6 +4,7 @@ const ports = {
   user: 8050,
   game: 8051,
   score: 8055,
+  feedback: 8056,
 };
 
 const base = (service) =>
@@ -35,6 +36,8 @@ export const api = {
   startGame: (userId) => axios.post(`${base('game')}/game/start/${userId}`).then((res) => res.data),
 
   action: (payload) => axios.post(`${base('game')}/game/action`, payload).then((res) => res.data),
+
+  analyzeFeedback: (payload) => axios.post(`${base('feedback')}/feedback/analyze`, payload).then((res) => res.data),
 
   leaderboard: () => axios.get(`${base('score')}/score/leaderboard`).then((res) => res.data),
 

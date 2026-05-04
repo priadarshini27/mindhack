@@ -23,6 +23,7 @@ const initialState = {
   streak: 0,
   gameStatus: 'idle', // idle, playing, completed, failed
   rank: 'Beginner',
+  actionHistory: [],
   leaderboard: defaultLeaderboard
 };
 
@@ -97,6 +98,7 @@ const gameReducer = (state, action) => {
         lifelines: 3,
         currentLevel: 1,
         levelScores: [0, 0, 0, 0, 0],
+        actionHistory: [],
         gameStatus: 'idle'
       };
     case 'SET_SESSION':
@@ -106,12 +108,15 @@ const gameReducer = (state, action) => {
         score: action.payload?.totalScore ?? state.score,
         lifelines: action.payload?.lifelines ?? state.lifelines,
         streak: action.payload?.streak ?? state.streak,
+        currentLevel: Math.min(5, action.payload?.currentLevel ?? state.currentLevel),
+        levelScores: action.payload?.levelScores?.length ? action.payload.levelScores : state.levelScores,
       };
     case 'TAKE_OATH':
       return { ...state, oathTaken: true };
     case 'START_GAME':
-      return { ...state, sessionId: null, gameStatus: 'playing', score: 0, lifelines: 3, currentLevel: 1, streak: 0, levelScores: [0, 0, 0, 0, 0] };
+      return { ...state, sessionId: null, gameStatus: 'playing', score: 0, lifelines: 3, currentLevel: 1, streak: 0, levelScores: [0, 0, 0, 0, 0], actionHistory: [] };
     case 'ANSWER_CORRECT': {
+      // current streak increments for each correct decision; bestStreak records the longest run.
       const newScore = state.score + action.payload.points;
       const newStreak = state.streak + 1;
       const newLevelScores = [...state.levelScores];
@@ -132,24 +137,30 @@ const gameReducer = (state, action) => {
     case 'ANSWER_WRONG':
       return {
         ...state,
-        lifelines: state.lifelines - 1,
+        lifelines: Math.max(0, state.lifelines - 1),
         streak: 0,
         gameStatus: state.lifelines - 1 <= 0 ? 'failed' : 'playing'
       };
     case 'USE_LIFELINE':
       return {
         ...state,
-        lifelines: state.lifelines - 1
+        lifelines: Math.max(0, state.lifelines - 1)
       };
     case 'NEXT_LEVEL':
       return {
         ...state,
-        currentLevel: state.currentLevel + 1
+        currentLevel: Math.min(5, state.currentLevel + 1)
       };
     case 'END_GAME':
       return {
         ...state,
         gameStatus: 'completed'
+      };
+
+    case 'RECORD_ACTION':
+      return {
+        ...state,
+        actionHistory: [...state.actionHistory, action.payload]
       };
     case 'SYNC_BACKEND_GAME':
       return {
@@ -158,6 +169,7 @@ const gameReducer = (state, action) => {
         score: action.payload?.totalScore ?? state.score,
         lifelines: action.payload?.lifelines ?? state.lifelines,
         streak: action.payload?.streak ?? state.streak,
+        currentLevel: Math.min(5, action.payload?.currentLevel ?? state.currentLevel),
         levelScores: action.payload?.levelScores?.length ? action.payload.levelScores : state.levelScores,
       };
     case 'SET_LEADERBOARD':
@@ -166,7 +178,7 @@ const gameReducer = (state, action) => {
         leaderboard: action.payload
       };
     case 'LOGOUT':
-      return { ...initialState, leaderboard: state.leaderboard };
+      return { ...initialState, leaderboard: state.leaderboard, actionHistory: [] };
     default:
       return state;
   }

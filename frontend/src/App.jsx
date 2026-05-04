@@ -11,6 +11,7 @@ import Oath from './pages/Oath';
 import Game from './pages/Game';
 import Result from './pages/Result';
 import Leaderboard from './pages/Leaderboard';
+import Analysis from './pages/Analysis';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/oath" element={<Oath />} />
             <Route path="/game" element={<Game />} />
             <Route path="/result" element={<Result />} />
+            <Route path="/analysis" element={<Analysis />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
           </Routes>
         </div>
