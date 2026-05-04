@@ -10,6 +10,7 @@ public class GameActionRequest {
     private int scoreDelta;
     private long decisionTimeMs;
     private String playerName;
+    private boolean levelComplete;
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -29,4 +30,6 @@ public class GameActionRequest {
     public void setDecisionTimeMs(long decisionTimeMs) { this.decisionTimeMs = decisionTimeMs; }
     public String getPlayerName() { return playerName; }
     public void setPlayerName(String playerName) { this.playerName = playerName; }
+    public boolean isLevelComplete() { return levelComplete; }
+    public void setLevelComplete(boolean levelComplete) { this.levelComplete = levelComplete; }
 }

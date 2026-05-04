@@ -77,6 +77,11 @@ const updateLeaderboardEntry = (username, score, rankCategory, streak) => {
 
 const getInitialState = () => ({ ...initialState, leaderboard: loadLeaderboard() });
 
+const normalizeLevelScores = (levelScores, fallback) => {
+  if (!Array.isArray(levelScores) || levelScores.length === 0) return fallback;
+  return Array.from({ length: 5 }, (_, index) => Number(levelScores[index] ?? fallback[index] ?? 0));
+};
+
 const gameReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN':
@@ -109,7 +114,7 @@ const gameReducer = (state, action) => {
         lifelines: action.payload?.lifelines ?? state.lifelines,
         streak: action.payload?.streak ?? state.streak,
         currentLevel: Math.min(5, action.payload?.currentLevel ?? state.currentLevel),
-        levelScores: action.payload?.levelScores?.length ? action.payload.levelScores : state.levelScores,
+        levelScores: normalizeLevelScores(action.payload?.levelScores, state.levelScores),
       };
     case 'TAKE_OATH':
       return { ...state, oathTaken: true };
@@ -149,7 +154,7 @@ const gameReducer = (state, action) => {
     case 'NEXT_LEVEL':
       return {
         ...state,
-        currentLevel: Math.min(5, state.currentLevel + 1)
+        currentLevel: Math.min(5, action.payload?.currentLevel ?? state.currentLevel + 1)
       };
     case 'END_GAME': {
       const isCompletedAll = action.payload?.completedAll;
@@ -183,8 +188,7 @@ const gameReducer = (state, action) => {
         score: action.payload?.totalScore ?? state.score,
         lifelines: action.payload?.lifelines ?? state.lifelines,
         streak: action.payload?.streak ?? state.streak,
-        currentLevel: Math.min(5, action.payload?.currentLevel ?? state.currentLevel),
-        levelScores: action.payload?.levelScores?.length ? action.payload.levelScores : state.levelScores,
+        levelScores: normalizeLevelScores(action.payload?.levelScores, state.levelScores),
       };
     case 'SET_LEADERBOARD':
       return {

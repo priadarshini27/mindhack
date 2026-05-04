@@ -4,6 +4,8 @@ import com.mindhack.game_service.dto.GameActionRequest;
 import com.mindhack.game_service.dto.MissionBundle;
 import com.mindhack.game_service.model.GameSession;
 import com.mindhack.game_service.repository.GameSessionRepository;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -34,6 +36,7 @@ public class GameService {
     public GameSession start(Long userId) {
         GameSession session = new GameSession();
         session.setUserId(userId);
+        session.setLevelScores(new ArrayList<>(Arrays.asList(0, 0, 0, 0, 0)));
         return repository.save(session);
     }
 
@@ -90,9 +93,11 @@ public class GameService {
                 session.setStatus("FAILED");
             }
         }
-        session.getLevelScores().add(scoreDelta);
-        session.setCurrentLevel(Math.min(5, request.getLevelId().intValue() + 1));
-        if (request.getLevelId() >= 5) {
+        addLevelScore(session, request.getLevelId(), scoreDelta);
+        if (request.isLevelComplete()) {
+            session.setCurrentLevel(Math.min(5, request.getLevelId().intValue() + 1));
+        }
+        if (request.isLevelComplete() && request.getLevelId() >= 5) {
             session.setStatus("COMPLETED");
         }
         GameSession saved = repository.save(session);
@@ -105,5 +110,16 @@ public class GameService {
                 "streak", saved.getStreak()), Object.class);
         syncUserProfile(request.getUserId(), saved.getTotalScore(), correct);
         return saved;
+    }
+
+    private void addLevelScore(GameSession session, Long levelId, int scoreDelta) {
+        int index = Math.max(0, levelId.intValue() - 1);
+        if (session.getLevelScores() == null) {
+            session.setLevelScores(new ArrayList<>());
+        }
+        while (session.getLevelScores().size() < 5 || session.getLevelScores().size() <= index) {
+            session.getLevelScores().add(0);
+        }
+        session.getLevelScores().set(index, session.getLevelScores().get(index) + scoreDelta);
     }
 }

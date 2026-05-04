@@ -50,7 +50,7 @@ const Game = () => {
     }[level] || `Level ${level} decision`;
   };
 
-  const syncAction = (currentLevel, isCorrect, points, decisionTimeMs) => {
+  const syncAction = (currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete) => {
     const weaknessCategory = isCorrect ? 'none' : getWeaknessCategory(currentLevel);
     if (state.user?.id && state.sessionId) {
       const success = `LEVEL_${currentLevel}_SUCCESS`;
@@ -64,6 +64,7 @@ const Game = () => {
         weaknessCategory,
         scoreDelta: points,
         decisionTimeMs,
+        levelComplete: isLevelComplete,
       })
         .then((session) => dispatch({ type: 'SYNC_BACKEND_GAME', payload: session }))
         .catch(() => {});
@@ -86,7 +87,7 @@ const Game = () => {
     const willLoseLife = !isCorrect && !shieldActive;
     const willFail = willLoseLife && state.lifelines - 1 <= 0;
 
-    syncAction(currentLevel, isCorrect, points, decisionTimeMs);
+    syncAction(currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete);
     if (isCorrect) {
       dispatch({ type: 'ANSWER_CORRECT', payload: { points } });
     } else {
@@ -107,7 +108,7 @@ const Game = () => {
             dispatch({ type: 'END_GAME', payload: { completedAll: true } });
           } else {
             startedAt.current = Date.now();
-            dispatch({ type: 'NEXT_LEVEL' });
+            dispatch({ type: 'NEXT_LEVEL', payload: { currentLevel: currentLevel + 1 } });
           }
         }, 1500); // short delay for visual feedback
       }
