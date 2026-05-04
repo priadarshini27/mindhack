@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
-import { FaHeart, FaLightbulb, FaForward, FaShieldAlt } from 'react-icons/fa';
+import { FaHeart, FaLightbulb, FaForward, FaShieldAlt, FaSignOutAlt } from 'react-icons/fa';
 
 import Level1Inbox from '../components/levels/Level1Inbox';
 import Level2Chat from '../components/levels/Level2Chat';
@@ -99,15 +99,23 @@ const Game = () => {
     }
 
     if (isLevelComplete || willFail) {
-      setTimeout(() => {
-        if (currentLevel === 5 || willFail) {
-          dispatch({ type: 'END_GAME' });
-        } else {
-          startedAt.current = Date.now();
-          dispatch({ type: 'NEXT_LEVEL' });
-        }
-      }, 1500); // short delay for visual feedback
+      if (willFail) {
+        dispatch({ type: 'END_GAME', payload: { completedAll: false } });
+      } else {
+        setTimeout(() => {
+          if (currentLevel === 5) {
+            dispatch({ type: 'END_GAME', payload: { completedAll: true } });
+          } else {
+            startedAt.current = Date.now();
+            dispatch({ type: 'NEXT_LEVEL' });
+          }
+        }, 1500); // short delay for visual feedback
+      }
     }
+  };
+
+  const handleExitGame = () => {
+    dispatch({ type: 'END_GAME', payload: { completedAll: false } });
   };
 
   const handleHint = () => {
@@ -161,6 +169,11 @@ const Game = () => {
 
   return (
     <div style={styles.container}>
+      <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '1rem' }}>
+        <button className="btn btn-danger" onClick={handleExitGame} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+          <FaSignOutAlt /> Exit Game
+        </button>
+      </div>
       <div style={styles.header}>
         <div style={styles.headerSection}>
           <span style={styles.label}>LEVEL</span>

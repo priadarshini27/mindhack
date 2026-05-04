@@ -151,11 +151,25 @@ const gameReducer = (state, action) => {
         ...state,
         currentLevel: Math.min(5, state.currentLevel + 1)
       };
-    case 'END_GAME':
+    case 'END_GAME': {
+      const isCompletedAll = action.payload?.completedAll;
+      let finalScore = state.score;
+      let newLevelScores = [...state.levelScores];
+      
+      if (!isCompletedAll) {
+        // Subtract current level's score since it's incomplete
+        finalScore = state.score - state.levelScores[state.currentLevel - 1];
+        // Zero out the current level score so it doesn't show in the scorecard
+        newLevelScores[state.currentLevel - 1] = 0;
+      }
+      
       return {
         ...state,
-        gameStatus: 'completed'
+        score: Math.max(0, finalScore),
+        levelScores: newLevelScores,
+        gameStatus: isCompletedAll ? 'completed' : 'failed'
       };
+    }
 
     case 'RECORD_ACTION':
       return {

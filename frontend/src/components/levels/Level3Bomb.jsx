@@ -21,7 +21,7 @@ const Level3Bomb = ({ onAction }) => {
     if (timeLeft === 0 && active) {
       setActive(false);
       setFeedback({ correct: false, message: "Time's up! You waited too long and the malicious link executed." });
-      onAction(false, 0, true);
+      onAction(false, 0, false);
     }
   }, [timeLeft, active, onAction]);
 
@@ -34,7 +34,7 @@ const Level3Bomb = ({ onAction }) => {
       } else if (action === 'click') {
         setActive(false);
         setFeedback({ correct: false, message: "Fatal error! You clicked the malicious update link immediately." });
-        onAction(false, 0, true);
+        onAction(false, 0, false);
       } else if (action === 'ignore') {
         setStage(2);
       }
@@ -42,11 +42,11 @@ const Level3Bomb = ({ onAction }) => {
       if (action === 'report') {
         setActive(false);
         setFeedback({ correct: true, message: "Perfect! You identified the link as malicious and reported it before clicking." });
-        onAction(true, 250 + timeLeft * 2);
+        setTimeout(() => onAction(true, 250 + timeLeft * 2, true), 2500);
       } else if (action === 'click') {
         setActive(false);
         setFeedback({ correct: false, message: "The malicious link was embedded in the update prompt. Clicking it triggered the attack." });
-        onAction(false, 0, true);
+        onAction(false, 0, false);
       } else if (action === 'dismiss') {
         setStage(2);
       }
@@ -54,11 +54,11 @@ const Level3Bomb = ({ onAction }) => {
       if (action === 'report') {
         setActive(false);
         setFeedback({ correct: true, message: "Great instincts. Reporting it now helped contain the threat." });
-        onAction(true, 200 + timeLeft * 2);
+        setTimeout(() => onAction(true, 200 + timeLeft * 2, true), 2500);
       } else {
         setActive(false);
         setFeedback({ correct: false, message: "You hesitated too long and the attack succeeded." });
-        onAction(false, 0, true);
+        onAction(false, 0, false);
       }
     }
   };

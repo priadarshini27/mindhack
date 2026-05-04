@@ -32,7 +32,7 @@ const Level5Escape = ({ onAction }) => {
     if (feedback) return;
     if (!markPhishing) {
       setFeedback({ correct: false, message: "Incorrect. You trusted a suspicious vendor update. The attacker gained a foothold!" });
-      setTimeout(() => onAction(false, 0, true), 2500);
+      setTimeout(() => onAction(false, 0, false), 2500);
     } else {
       setFeedback({ correct: true, message: "Good catch. But the attacker immediately pivots to another vector..." });
       setTimeout(() => {
@@ -46,7 +46,7 @@ const Level5Escape = ({ onAction }) => {
     if (feedback) return;
     if (!block) {
       setFeedback({ correct: false, message: "Incorrect. You engaged with the attacker and they cloned your session." });
-      setTimeout(() => onAction(false, 0, true), 2500);
+      setTimeout(() => onAction(false, 0, false), 2500);
     } else {
       setFeedback({ correct: true, message: "Blocked! But wait, alarms are going off in the server room!" });
       setTimeout(() => {
@@ -60,13 +60,13 @@ const Level5Escape = ({ onAction }) => {
     if (feedback || terminalTyping) return;
     if (action === 'shutdown') {
       setFeedback({ correct: false, message: "Critical Failure! You shut down the main server, causing a massive outage and losing trace of the attacker." });
-      setTimeout(() => onAction(false, 0, true), 2500);
+      setTimeout(() => onAction(false, 0, false), 2500);
     } else if (action === 'isolate') {
       setFeedback({ correct: true, message: "Excellent! You isolated the compromised node, stopping the breach without causing a total outage." });
       setTimeout(() => onAction(true, 500, true), 3000);
     } else if (action === 'ignore') {
       setFeedback({ correct: false, message: "You ignored the logs. The attacker successfully exfiltrated 500GB of customer data." });
-      setTimeout(() => onAction(false, 0, true), 2500);
+      setTimeout(() => onAction(false, 0, false), 2500);
     }
   };
 

@@ -26,7 +26,7 @@ const Level4Breach = ({ onAction }) => {
   const handleMiss = () => {
     if (feedback) return;
     setFeedback({ correct: false, message: "You missed the obvious red flags and entered data!" });
-    setTimeout(() => onAction(false, 0, true), 2000);
+    setTimeout(() => onAction(false, 0, false), 2000);
   };
 
   return (

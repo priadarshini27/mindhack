@@ -42,7 +42,7 @@ const Level2Chat = ({ onAction }) => {
       if (actionType === 'yes') {
         setFeedback({ correct: false, message: 'Incorrect! This is an aggressive scam trying to force you to authenticate. You should never agree to this.' });
         setConversationEnded(true);
-        setTimeout(() => onAction(false, 0, true), 2000);
+        setTimeout(() => onAction(false, 0, false), 2000);
       } else if (actionType === 'no') {
         addMessage('NO, I will not authorize this.', 'me');
         addMessage('You are putting your account at risk. If you do not verify, your access will be terminated.', 'them');
@@ -58,7 +58,7 @@ const Level2Chat = ({ onAction }) => {
         addMessage('Here is the code: 847291', 'me');
         setFeedback({ correct: false, message: 'Incorrect decision. You just gave a scammer the one-time code for your account!' });
         setConversationEnded(true);
-        setTimeout(() => onAction(false, 0, true), 2000);
+        setTimeout(() => onAction(false, 0, false), 2000);
       } else if (actionType === 'block') {
         setFeedback({ correct: true, message: 'Correct decision! A real bank will never ask for your OTP through a chat alert like this.' });
         setConversationEnded(true);
