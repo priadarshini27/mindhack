@@ -43,4 +43,9 @@ public class GameController {
     public GameSession action(@RequestBody GameActionRequest request) {
         return service.action(request);
     }
+
+    @PostMapping("/{sessionId}/lifeline")
+    public GameSession useLifeline(@PathVariable Long sessionId) {
+        return service.useLifeline(sessionId);
+    }
 }

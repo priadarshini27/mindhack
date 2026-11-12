@@ -15,7 +15,6 @@ public class Scenario {
     @Column(length = 2000)
     private String correctSignals;
 
-    // Getter and Setter for id
     public Long getId() {
         return id;
     }

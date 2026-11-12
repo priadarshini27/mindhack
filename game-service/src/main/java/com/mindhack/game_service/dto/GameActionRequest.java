@@ -11,6 +11,7 @@ public class GameActionRequest {
     private long decisionTimeMs;
     private String playerName;
     private boolean levelComplete;
+    private boolean shielded;
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -32,4 +33,6 @@ public class GameActionRequest {
     public void setPlayerName(String playerName) { this.playerName = playerName; }
     public boolean isLevelComplete() { return levelComplete; }
     public void setLevelComplete(boolean levelComplete) { this.levelComplete = levelComplete; }
+    public boolean isShielded() { return shielded; }
+    public void setShielded(boolean shielded) { this.shielded = shielded; }
 }

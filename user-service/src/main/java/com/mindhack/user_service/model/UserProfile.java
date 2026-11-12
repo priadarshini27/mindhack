@@ -1,5 +1,6 @@
 package com.mindhack.user_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +17,9 @@ public class UserProfile {
     private Long id;
     private String name;
     private String email;
+    @JsonIgnore
     private String passwordHash;
+    @JsonIgnore
     private String sessionToken;
     private boolean oathCompleted;
     private int currentStreak;

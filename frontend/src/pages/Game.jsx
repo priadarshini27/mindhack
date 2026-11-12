@@ -18,6 +18,8 @@ const Game = () => {
   const [skipUsed, setSkipUsed] = React.useState(false);
   const [shieldActive, setShieldActive] = React.useState(false);
   const [shieldUsed, setShieldUsed] = React.useState(false);
+  // Bumped to remount the current level so the player can retry after a mistake.
+  const [attempt, setAttempt] = React.useState(0);
   const startedAt = React.useRef(Date.now());
 
   useEffect(() => {
@@ -50,7 +52,7 @@ const Game = () => {
     }[level] || `Level ${level} decision`;
   };
 
-  const syncAction = (currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete) => {
+  const syncAction = (currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete, shielded) => {
     const weaknessCategory = isCorrect ? 'none' : getWeaknessCategory(currentLevel);
     if (state.user?.id && state.sessionId) {
       const success = `LEVEL_${currentLevel}_SUCCESS`;
@@ -65,6 +67,7 @@ const Game = () => {
         scoreDelta: points,
         decisionTimeMs,
         levelComplete: isLevelComplete,
+        shielded,
       })
         .then((session) => dispatch({ type: 'SYNC_BACKEND_GAME', payload: session }))
         .catch(() => {});
@@ -87,7 +90,7 @@ const Game = () => {
     const willLoseLife = !isCorrect && !shieldActive;
     const willFail = willLoseLife && state.lifelines - 1 <= 0;
 
-    syncAction(currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete);
+    syncAction(currentLevel, isCorrect, points, decisionTimeMs, isLevelComplete, !isCorrect && shieldActive);
     if (isCorrect) {
       dispatch({ type: 'ANSWER_CORRECT', payload: { points } });
     } else {
@@ -110,8 +113,22 @@ const Game = () => {
             startedAt.current = Date.now();
             dispatch({ type: 'NEXT_LEVEL', payload: { currentLevel: currentLevel + 1 } });
           }
-        }, 1500); // short delay for visual feedback
+        }, 1500);
       }
+    } else if (!isCorrect && currentLevel !== 1) {
+      // Levels 2-5 lock after a wrong decision; restart the level after the feedback is shown.
+      // Level 1 handles each email independently, so it keeps going on its own.
+      setTimeout(() => {
+        startedAt.current = Date.now();
+        setAttempt((n) => n + 1);
+      }, 1500);
+    }
+  };
+
+  const consumeLifeline = () => {
+    dispatch({ type: 'USE_LIFELINE' });
+    if (state.sessionId) {
+      api.useLifeline(state.sessionId).catch(() => {});
     }
   };
 
@@ -121,7 +138,7 @@ const Game = () => {
 
   const handleHint = () => {
     if (state.lifelines > 0 && !hintUsed) {
-      dispatch({ type: 'USE_LIFELINE' });
+      consumeLifeline();
       setHintUsed(true);
       const hints = [
         "Check the sender's email address carefully for misspellings.",
@@ -136,11 +153,13 @@ const Game = () => {
 
   const handleSkip = () => {
     if (state.lifelines > 0 && !skipUsed) {
-      dispatch({ type: 'USE_LIFELINE' });
+      consumeLifeline();
       setSkipUsed(true);
       if (state.currentLevel === 5) {
-        dispatch({ type: 'END_GAME' });
+        // Skipping the final level still finishes the simulation.
+        dispatch({ type: 'END_GAME', payload: { completedAll: true } });
       } else {
+        startedAt.current = Date.now();
         dispatch({ type: 'NEXT_LEVEL' });
       }
     }
@@ -148,7 +167,7 @@ const Game = () => {
 
   const handleShield = () => {
     if (state.lifelines > 0 && !shieldUsed) {
-      dispatch({ type: 'USE_LIFELINE' });
+      consumeLifeline();
       setShieldUsed(true);
       setShieldActive(true);
       alert("Shield activated! Your next mistake will not cost a lifeline.");
@@ -156,12 +175,13 @@ const Game = () => {
   };
 
   const renderLevel = () => {
+    const key = `${state.currentLevel}-${attempt}`;
     switch (state.currentLevel) {
-      case 1: return <Level1Inbox onAction={handleAction} />;
-      case 2: return <Level2Chat onAction={handleAction} />;
-      case 3: return <Level3Bomb onAction={handleAction} />;
-      case 4: return <Level4Breach onAction={handleAction} />;
-      case 5: return <Level5Escape onAction={handleAction} />;
+      case 1: return <Level1Inbox key={key} onAction={handleAction} />;
+      case 2: return <Level2Chat key={key} onAction={handleAction} />;
+      case 3: return <Level3Bomb key={key} onAction={handleAction} />;
+      case 4: return <Level4Breach key={key} onAction={handleAction} />;
+      case 5: return <Level5Escape key={key} onAction={handleAction} />;
       default: return <div>Loading...</div>;
     }
   };

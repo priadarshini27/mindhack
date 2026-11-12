@@ -37,6 +37,8 @@ export const api = {
 
   action: (payload) => axios.post(`${base('game')}/game/action`, payload).then((res) => res.data),
 
+  useLifeline: (sessionId) => axios.post(`${base('game')}/game/${sessionId}/lifeline`).then((res) => res.data),
+
   analyzeFeedback: (payload) => axios.post(`${base('feedback')}/feedback/analyze`, payload).then((res) => res.data),
 
   leaderboard: () => axios.get(`${base('score')}/score/leaderboard`).then((res) => res.data),

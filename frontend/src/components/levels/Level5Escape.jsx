@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaShieldAlt, FaTerminal, FaServer, FaInbox, FaCommentDots } from 'react-icons/fa';
 
 const Level5Escape = ({ onAction }) => {
-  const [phase, setPhase] = useState(0); // 0: Email, 1: Chat, 2: Terminal
+  const [phase, setPhase] = useState(0); 
   const [feedback, setFeedback] = useState(null);
   
-  // Terminal logs
   const [logs, setLogs] = useState([]);
   const [terminalTyping, setTerminalTyping] = useState(false);
 

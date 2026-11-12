@@ -63,16 +63,15 @@ public class GameService {
                             "correctDecision", correct)),
                     Object.class);
         } catch (Exception ex) {
-            // log and continue; score service update should not break game action flow
             System.err.println("Warning: failed to sync user profile progress for user " + userId + ": " + ex.getMessage());
         }
     }
 
     private String determineRank(int score) {
-        if (score < 500) return "Beginner";
-        if (score < 1000) return "Intermediate";
-        if (score < 2000) return "Expert";
-        return "Cyber Defender Elite";
+        if (score >= 650) return "Cyber Defender Elite";
+        if (score >= 450) return "Expert";
+        if (score >= 250) return "Intermediate";
+        return "Beginner";
     }
 
     public Boolean checkAnswer(String answer, String correct) {
@@ -87,11 +86,8 @@ public class GameService {
         int scoreDelta = correct ? Math.max(0, request.getScoreDelta()) : 0;
         session.setTotalScore(session.getTotalScore() + scoreDelta);
         session.setStreak(correct ? session.getStreak() + 1 : 0);
-        if (!correct) {
-            session.setLifelines(Math.max(0, session.getLifelines() - 1));
-            if (session.getLifelines() == 0) {
-                session.setStatus("FAILED");
-            }
+        if (!correct && !request.isShielded()) {
+            loseLifeline(session);
         }
         addLevelScore(session, request.getLevelId(), scoreDelta);
         if (request.isLevelComplete()) {
@@ -110,6 +106,20 @@ public class GameService {
                 "streak", saved.getStreak()), Object.class);
         syncUserProfile(request.getUserId(), saved.getTotalScore(), correct);
         return saved;
+    }
+
+    public GameSession useLifeline(Long sessionId) {
+        GameSession session = repository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
+        loseLifeline(session);
+        return repository.save(session);
+    }
+
+    private void loseLifeline(GameSession session) {
+        session.setLifelines(Math.max(0, session.getLifelines() - 1));
+        if (session.getLifelines() == 0) {
+            session.setStatus("FAILED");
+        }
     }
 
     private void addLevelScore(GameSession session, Long levelId, int scoreDelta) {

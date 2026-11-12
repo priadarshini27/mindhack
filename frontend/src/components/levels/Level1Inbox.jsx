@@ -28,7 +28,6 @@ const Level1Inbox = ({ onAction }) => {
 
     const isLevelComplete = updatedProcessed.length === emails.length;
     
-    // Pass isLevelComplete flag
     onAction(isCorrect, 20, isLevelComplete);
   };
 

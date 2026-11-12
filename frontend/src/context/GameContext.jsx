@@ -6,22 +6,22 @@ const USER_STATS_PREFIX = 'mindhack_user_';
 const defaultLeaderboard = [
   { username: 'cyberninja', name: 'CyberNinja', score: 3500, rankCategory: 'Cyber Defender Elite', streak: 15 },
   { username: 'alice_sec', name: 'Alice_sec', score: 2800, rankCategory: 'Cyber Defender Elite', streak: 12 },
-  { username: 'bobhack', name: 'BobHack', score: 1950, rankCategory: 'Expert', streak: 8 }
+  { username: 'bobhack', name: 'BobHack', score: 1950, rankCategory: 'Cyber Defender Elite', streak: 8 }
 ];
 
 const initialState = {
-  user: null, // User details from login
+  user: null, 
   sessionId: null,
   oathTaken: false,
   score: 0,
   bestScore: 0,
   bestStreak: 0,
   bestRank: 'Beginner',
-  levelScores: [0, 0, 0, 0, 0], // Scores per level
+  levelScores: [0, 0, 0, 0, 0], 
   lifelines: 3,
-  currentLevel: 1, // 1 to 5
+  currentLevel: 1, 
   streak: 0,
-  gameStatus: 'idle', // idle, playing, completed, failed
+  gameStatus: 'idle', 
   rank: 'Beginner',
   actionHistory: [],
   leaderboard: defaultLeaderboard
@@ -42,7 +42,6 @@ const saveLeaderboardData = (leaderboard) => {
   try {
     localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
   } catch {
-    // ignore write failure
   }
 };
 
@@ -61,7 +60,6 @@ const saveUserStats = (username, stats) => {
   try {
     localStorage.setItem(`${USER_STATS_PREFIX}${username}`, JSON.stringify(stats));
   } catch {
-    // ignore write failure
   }
 };
 
@@ -121,7 +119,6 @@ const gameReducer = (state, action) => {
     case 'START_GAME':
       return { ...state, sessionId: null, gameStatus: 'playing', score: 0, lifelines: 3, currentLevel: 1, streak: 0, levelScores: [0, 0, 0, 0, 0], actionHistory: [] };
     case 'ANSWER_CORRECT': {
-      // current streak increments for each correct decision; bestStreak records the longest run.
       const newScore = state.score + action.payload.points;
       const newStreak = state.streak + 1;
       const newLevelScores = [...state.levelScores];
@@ -162,9 +159,7 @@ const gameReducer = (state, action) => {
       let newLevelScores = [...state.levelScores];
       
       if (!isCompletedAll) {
-        // Subtract current level's score since it's incomplete
         finalScore = state.score - state.levelScores[state.currentLevel - 1];
-        // Zero out the current level score so it doesn't show in the scorecard
         newLevelScores[state.currentLevel - 1] = 0;
       }
       
@@ -182,13 +177,12 @@ const gameReducer = (state, action) => {
         actionHistory: [...state.actionHistory, action.payload]
       };
     case 'SYNC_BACKEND_GAME':
+      // Responses arrive asynchronously, often after later local actions (or END_GAME)
+      // have already updated the state, so copying score/lifelines from them would
+      // roll the game back. The local reducer is the source of truth during play.
       return {
         ...state,
         sessionId: action.payload?.id ?? state.sessionId,
-        score: action.payload?.totalScore ?? state.score,
-        lifelines: action.payload?.lifelines ?? state.lifelines,
-        streak: action.payload?.streak ?? state.streak,
-        levelScores: normalizeLevelScores(action.payload?.levelScores, state.levelScores),
       };
     case 'SET_LEADERBOARD':
       return {
@@ -203,10 +197,10 @@ const gameReducer = (state, action) => {
 };
 
 const calculateRank = (score) => {
-  if (score < 500) return 'Beginner';
-  if (score < 1000) return 'Intermediate';
-  if (score < 2000) return 'Expert';
-  return 'Cyber Defender Elite';
+  if (score >= 650) return 'Cyber Defender Elite';
+  if (score >= 450) return 'Expert';
+  if (score >= 250) return 'Intermediate';
+  return 'Beginner';
 };
 
 export const GameContext = createContext();
