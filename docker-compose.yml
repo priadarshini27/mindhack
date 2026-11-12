@@ -18,6 +18,8 @@ services:
   user-service:
     build: ./user-service
     image: mindhack-user-service:latest
+    environment:
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-mindhack-dev-internal-key}
     ports:
       - "8050:8050"
     depends_on:
@@ -27,6 +29,8 @@ services:
   game-service:
     build: ./game-service
     image: mindhack-game-service:latest
+    environment:
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-mindhack-dev-internal-key}
     ports:
       - "8051:8051"
     depends_on:
@@ -75,6 +79,8 @@ services:
   score-service:
     build: ./score-service
     image: mindhack-score-service:latest
+    environment:
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-mindhack-dev-internal-key}
     ports:
       - "8055:8055"
     depends_on:

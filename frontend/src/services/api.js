@@ -12,7 +12,16 @@ const base = (service) =>
 
 const emailForAgent = (username) => (username.includes('@') ? username : `${username}@mindhack.local`);
 
+// Session token sent as a Bearer header on authenticated calls. Set by GameContext on login/restore.
+let authToken = null;
+export const setAuthToken = (token) => {
+  authToken = token || null;
+};
+const authHeaders = () => (authToken ? { headers: { Authorization: `Bearer ${authToken}` } } : {});
+
 export const api = {
+  me: () => axios.get(`${base('user')}/users/me`, authHeaders()).then((res) => res.data),
+
   signup: ({ username, password }) =>
     axios
       .post(`${base('user')}/users/signup`, {
@@ -31,13 +40,14 @@ export const api = {
       .then((res) => res.data),
 
   oath: (userId, pledges) =>
-    axios.post(`${base('user')}/users/${userId}/oath`, { pledges }).then((res) => res.data),
+    axios.post(`${base('user')}/users/${userId}/oath`, { pledges }, authHeaders()).then((res) => res.data),
 
-  startGame: (userId) => axios.post(`${base('game')}/game/start/${userId}`).then((res) => res.data),
+  startGame: (userId) => axios.post(`${base('game')}/game/start/${userId}`, null, authHeaders()).then((res) => res.data),
 
-  action: (payload) => axios.post(`${base('game')}/game/action`, payload).then((res) => res.data),
+  action: (payload) => axios.post(`${base('game')}/game/action`, payload, authHeaders()).then((res) => res.data),
 
-  useLifeline: (sessionId) => axios.post(`${base('game')}/game/${sessionId}/lifeline`).then((res) => res.data),
+  useLifeline: (sessionId) =>
+    axios.post(`${base('game')}/game/${sessionId}/lifeline`, null, authHeaders()).then((res) => res.data),
 
   analyzeFeedback: (payload) => axios.post(`${base('feedback')}/feedback/analyze`, payload).then((res) => res.data),
 

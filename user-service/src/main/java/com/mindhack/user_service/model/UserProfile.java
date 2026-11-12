@@ -1,6 +1,7 @@
 package com.mindhack.user_service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,7 +24,11 @@ public class UserProfile {
     private String sessionToken;
     private boolean oathCompleted;
     private int currentStreak;
+    /** Longest run of consecutive correct decisions in the simulation. */
     private int bestStreak;
+    /** Longest run of consecutive daily logins. Defaulted so existing rows migrate cleanly. */
+    @Column(columnDefinition = "int not null default 0")
+    private int bestLoginStreak;
     private int consecutiveCorrect;
     private int bestScore;
     private String latestRank = "Beginner";
@@ -47,6 +52,8 @@ public class UserProfile {
     public void setCurrentStreak(int currentStreak) { this.currentStreak = currentStreak; }
     public int getBestStreak() { return bestStreak; }
     public void setBestStreak(int bestStreak) { this.bestStreak = bestStreak; }
+    public int getBestLoginStreak() { return bestLoginStreak; }
+    public void setBestLoginStreak(int bestLoginStreak) { this.bestLoginStreak = bestLoginStreak; }
     public int getConsecutiveCorrect() { return consecutiveCorrect; }
     public void setConsecutiveCorrect(int consecutiveCorrect) { this.consecutiveCorrect = consecutiveCorrect; }
     public int getBestScore() { return bestScore; }

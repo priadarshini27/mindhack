@@ -12,4 +12,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleApi(ApiException exception) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", exception.getMessage()));
     }
+
+    @ExceptionHandler(AuthException.class)
+    public ResponseEntity<Map<String, String>> handleAuth(AuthException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", exception.getMessage()));
+    }
 }

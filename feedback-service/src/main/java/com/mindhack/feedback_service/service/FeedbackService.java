@@ -43,7 +43,10 @@ public class FeedbackService {
                 .toList();
 
         Map<String, Long> weaknessCounts = incorrectActions.stream()
-                .collect(Collectors.groupingBy(ActionTrace::getWeaknessCategory, Collectors.counting()));
+                // groupingBy throws on null keys, so a trace without a category is grouped as "Unknown".
+                .collect(Collectors.groupingBy(
+                        action -> action.getWeaknessCategory() == null ? "Unknown" : action.getWeaknessCategory(),
+                        Collectors.counting()));
 
         long repeatedCategories = weaknessCounts.values().stream().filter(count -> count > 1).count();
         long quickIncorrects = incorrectActions.stream().filter(action -> action.getDecisionTimeMs() > 0 && action.getDecisionTimeMs() < 2500).count();

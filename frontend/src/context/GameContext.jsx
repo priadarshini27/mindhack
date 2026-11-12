@@ -1,6 +1,8 @@
 import React, { createContext, useReducer, useContext, useEffect } from 'react';
+import { api, setAuthToken } from '../services/api';
 
 const LEADERBOARD_KEY = 'mindhack_leaderboard';
+const AUTH_KEY = 'mindhack_auth';
 const USER_STATS_PREFIX = 'mindhack_user_';
 
 const defaultLeaderboard = [
@@ -73,7 +75,33 @@ const updateLeaderboardEntry = (username, score, rankCategory, streak) => {
   return updated;
 };
 
-const getInitialState = () => ({ ...initialState, leaderboard: loadLeaderboard() });
+// The logged-in user is kept in localStorage so a page refresh doesn't log them out.
+const loadAuth = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const stored = localStorage.getItem(AUTH_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveAuth = (auth) => {
+  if (typeof window === 'undefined') return;
+  try {
+    if (auth) localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+    else localStorage.removeItem(AUTH_KEY);
+  } catch {
+  }
+};
+
+const getInitialState = () => {
+  const base = { ...initialState, leaderboard: loadLeaderboard() };
+  const auth = loadAuth();
+  if (!auth?.user?.token) return base;
+  setAuthToken(auth.user.token);
+  return { ...base, ...auth };
+};
 
 const normalizeLevelScores = (levelScores, fallback) => {
   if (!Array.isArray(levelScores) || levelScores.length === 0) return fallback;
@@ -196,6 +224,7 @@ const gameReducer = (state, action) => {
   }
 };
 
+// Keep in sync with ScoreService.rank in score-service, which is the source of truth on the server.
 const calculateRank = (score) => {
   if (score >= 650) return 'Cyber Defender Elite';
   if (score >= 450) return 'Expert';
@@ -207,6 +236,29 @@ export const GameContext = createContext();
 
 export const GameProvider = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState, getInitialState);
+
+  // Persist the login (and token for API calls) whenever it changes.
+  useEffect(() => {
+    setAuthToken(state.user?.token);
+    saveAuth(state.user ? {
+      user: state.user,
+      oathTaken: state.oathTaken,
+      bestScore: state.bestScore,
+      bestStreak: state.bestStreak,
+      bestRank: state.bestRank,
+      rank: state.rank,
+    } : null);
+  }, [state.user, state.oathTaken, state.bestScore, state.bestStreak, state.bestRank, state.rank]);
+
+  // A restored token may have been replaced by a login elsewhere; drop it if the server rejects it.
+  useEffect(() => {
+    if (!state.user?.token) return;
+    api.me().catch((err) => {
+      if (err.response?.status === 401) dispatch({ type: 'LOGOUT' });
+    });
+    // Only check once per token.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.user?.token]);
 
   useEffect(() => {
     if (!state.user) return;

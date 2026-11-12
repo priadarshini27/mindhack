@@ -4,6 +4,7 @@ import com.mindhack.user_service.dto.AuthRequest;
 import com.mindhack.user_service.dto.AuthResponse;
 import com.mindhack.user_service.dto.ProfileUpdateRequest;
 import com.mindhack.user_service.exception.ApiException;
+import com.mindhack.user_service.exception.AuthException;
 import com.mindhack.user_service.model.UserProfile;
 import com.mindhack.user_service.repository.UserRepository;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ public class UserService {
         UserProfile user = new UserProfile();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(hash(request.getPassword()));
+        user.setPasswordHash(PasswordHasher.hash(request.getPassword()));
         user.setSessionToken(UUID.randomUUID().toString());
         user.setLastLoginDate(LocalDate.now());
         user.getRankHistory().add("Beginner");
@@ -43,8 +44,21 @@ public class UserService {
     public AuthResponse login(AuthRequest request) {
         UserProfile user = repository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ApiException("Invalid email or password"));
-        if (!user.getPasswordHash().equals(hash(request.getPassword()))) {
-            throw new ApiException("Invalid email or password");
+        String password = request.getPassword() == null ? "" : request.getPassword();
+        String stored = user.getPasswordHash();
+        if (PasswordHasher.isHashed(stored)) {
+            if (!PasswordHasher.matches(password, stored)) {
+                throw new ApiException("Invalid email or password");
+            }
+        } else {
+            // Accounts created before PBKDF2 was introduced store an unsalted SHA-256 hex digest.
+            // Verify it once, then upgrade the stored hash.
+            if (stored == null || !MessageDigest.isEqual(
+                    stored.getBytes(StandardCharsets.UTF_8),
+                    legacySha256(password).getBytes(StandardCharsets.UTF_8))) {
+                throw new ApiException("Invalid email or password");
+            }
+            user.setPasswordHash(PasswordHasher.hash(password));
         }
         user.setSessionToken(UUID.randomUUID().toString());
         updateDailyStreak(user);
@@ -52,10 +66,11 @@ public class UserService {
     }
 
     public UserProfile profile(String token) {
-        return repository.findBySessionToken(token).orElseThrow(() -> new ApiException("Invalid session"));
+        return repository.findBySessionToken(token).orElseThrow(() -> new AuthException("Invalid session"));
     }
 
-    public UserProfile completeOath(Long userId, int pledgeCount) {
+    public UserProfile completeOath(Long userId, String token, int pledgeCount) {
+        requireOwner(userId, token);
         if (pledgeCount < 5) {
             throw new ApiException("All cybersecurity pledges must be selected");
         }
@@ -82,6 +97,14 @@ public class UserService {
         return repository.save(user);
     }
 
+    private void requireOwner(Long userId, String token) {
+        UserProfile caller = profile(token);
+        if (!caller.getId().equals(userId)) {
+            throw new AuthException("Not allowed to modify another user");
+        }
+    }
+
+    /** Daily login streak. Kept separate from bestStreak, which counts consecutive correct decisions. */
     private void updateDailyStreak(UserProfile user) {
         LocalDate today = LocalDate.now();
         if (today.equals(user.getLastLoginDate())) {
@@ -92,7 +115,7 @@ public class UserService {
         } else {
             user.setCurrentStreak(1);
         }
-        user.setBestStreak(Math.max(user.getBestStreak(), user.getCurrentStreak()));
+        user.setBestLoginStreak(Math.max(user.getBestLoginStreak(), user.getCurrentStreak()));
         user.setLastLoginDate(today);
     }
 
@@ -102,12 +125,12 @@ public class UserService {
         }
     }
 
-    private String hash(String value) {
+    private static String legacySha256(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception ex) {
-            throw new ApiException("Unable to secure password");
+            throw new ApiException("Unable to verify password");
         }
     }
 }

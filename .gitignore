@@ -1,0 +1,12 @@
+# Dependencies and build output
+node_modules/
+frontend/dist/
+target/
+.m2repo/
+
+# Editor / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

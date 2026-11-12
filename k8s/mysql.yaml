@@ -12,12 +12,24 @@ data:
     CREATE DATABASE IF NOT EXISTS score_db;
     CREATE DATABASE IF NOT EXISTS feedback_db;
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
 spec:
   replicas: 1
+  strategy:
+    type: Recreate   # a ReadWriteOnce volume can't be mounted by two pods during a rolling update
   selector:
     matchLabels: { app: mysql }
   template:
@@ -34,10 +46,15 @@ spec:
           volumeMounts:
             - name: mysql-init
               mountPath: /docker-entrypoint-initdb.d
+            - name: mysql-data
+              mountPath: /var/lib/mysql
       volumes:
         - name: mysql-init
           configMap:
             name: mysql-init-script
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-data
 ---
 apiVersion: v1
 kind: Service

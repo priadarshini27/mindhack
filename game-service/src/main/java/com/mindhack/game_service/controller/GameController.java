@@ -22,8 +22,10 @@ public class GameController {
     }
 
     @PostMapping("/start/{userId}")
-    public GameSession start(@PathVariable Long userId) {
-        return service.start(userId);
+    public GameSession start(
+            @PathVariable Long userId,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return service.start(userId, authorization);
     }
 
     @GetMapping("/mission/{id}")
@@ -40,12 +42,16 @@ public class GameController {
     }
 
     @PostMapping("/action")
-    public GameSession action(@RequestBody GameActionRequest request) {
-        return service.action(request);
+    public GameSession action(
+            @RequestBody GameActionRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return service.action(request, authorization);
     }
 
     @PostMapping("/{sessionId}/lifeline")
-    public GameSession useLifeline(@PathVariable Long sessionId) {
-        return service.useLifeline(sessionId);
+    public GameSession useLifeline(
+            @PathVariable Long sessionId,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        return service.useLifeline(sessionId, null, authorization);
     }
 }

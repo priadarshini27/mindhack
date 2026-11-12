@@ -6,5 +6,5 @@ import com.mindhack.score_service.model.Score;
 
 public interface ScoreRepository extends JpaRepository<Score, Long> {
     List<Score> findByUserId(Long userId);
-    List<Score> findTop3ByOrderByTotalScoreDescStreakDesc();
+    List<Score> findAllByOrderByTotalScoreDescStreakDesc();
 }

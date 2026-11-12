@@ -21,6 +21,7 @@ const Game = () => {
   // Bumped to remount the current level so the player can retry after a mistake.
   const [attempt, setAttempt] = React.useState(0);
   const startedAt = React.useRef(Date.now());
+  const startingSession = React.useRef(false);
 
   useEffect(() => {
     if (!state.oathTaken) {
@@ -30,12 +31,13 @@ const Game = () => {
       dispatch({ type: 'START_GAME' });
       startedAt.current = Date.now();
     }
-    if (state.gameStatus === 'playing' && !state.sessionId) {
-      if (state.user?.id) {
-        api.startGame(state.user.id)
-          .then((session) => dispatch({ type: 'SET_SESSION', payload: session }))
-          .catch(() => {});
-      }
+    if (state.gameStatus === 'playing' && !state.sessionId && state.user?.id && !startingSession.current) {
+      // Guard against creating two sessions when effects run twice (React StrictMode) or re-run before the reply.
+      startingSession.current = true;
+      api.startGame(state.user.id)
+        .then((session) => dispatch({ type: 'SET_SESSION', payload: session }))
+        .catch(() => {})
+        .finally(() => { startingSession.current = false; });
     }
     if (state.gameStatus === 'completed' || state.gameStatus === 'failed') {
       navigate('/result');

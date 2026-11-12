@@ -1,7 +1,9 @@
 package com.mindhack.score_service.service;
 
 import org.springframework.stereotype.Service;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.mindhack.score_service.repository.ScoreRepository;
 import com.mindhack.score_service.model.Score;
@@ -24,8 +26,13 @@ public class ScoreService {
         return repo.findByUserId(userId);
     }
 
+    /** Top 3 players, using each player's best row (a row is saved for every action). */
     public List<Score> leaderboard() {
-        return repo.findTop3ByOrderByTotalScoreDescStreakDesc();
+        Set<Object> seen = new HashSet<>();
+        return repo.findAllByOrderByTotalScoreDescStreakDesc().stream()
+                .filter(score -> seen.add(score.getUserId() != null ? score.getUserId() : score.getPlayerName()))
+                .limit(3)
+                .toList();
     }
 
     public String rank(int totalScore) {
